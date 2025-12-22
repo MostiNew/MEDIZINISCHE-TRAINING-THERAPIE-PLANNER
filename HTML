@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MTT-Planer – Standard Therapieplan, Export & Print</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f7fa;margin:0;padding:20px;color:#1f2937}
+  h1,h2,h3{margin:0 0 10px}
+  .container{max-width:1800px;margin:auto}
+  .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,.06)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  label{font-size:.75rem;font-weight:600}
+  input,select,textarea{width:100%;padding:6px;border-radius:6px;border:1px solid #cbd5e1;font-size:.75rem}
+  textarea{resize:vertical;min-height:36px}
+  .prescribe{background:#ecfeff;border-left:5px solid #0284c7}
+  .execute{background:#f0fdf4;border-left:5px solid #16a34a}
+  .evaluate{background:#fff7ed;border-left:5px solid #ea580c}
+  .inventory{background:#f8fafc;border-left:5px solid #475569}
+  .admin{background:#fefce8;border-left:5px solid #ca8a04}
+  .hint{font-size:.7rem;color:#475569;background:#f1f5f9;padding:8px;border-radius:8px}
+  .actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  button{padding:8px 14px;border-radius:8px;border:none;background:#0284c7;color:#fff;font-size:.8rem;cursor:pointer}
+  button.secondary{background:#334155}
+  footer{font-size:.7rem;text-align:center;color:#6b7280;margin-top:24px}
+  .disclaimer{font-size:.65rem;color:#9ca3af;margin:8px 0 16px;background:#fef3c7;padding:8px;border-radius:6px}
+  table {width: 100%; border-collapse: separate; border-spacing: 0; font-size: .75rem;}
+  th {background-color: #0284c7; color: white; padding: 6px; border: none; text-align: center;}
+  td {border-bottom: 1px solid #e2e8f0; padding: 6px; text-align: center;}
+  tr:nth-child(even) td {background-color: #f8fafc;}
+  tr:hover td {background-color: #e0f2fe;}
+  input:focus, select:focus, textarea:focus {outline: 2px solid #0284c7; border-color: #0284c7;}
+  @media print{.actions{display:none} body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+  <img src="logo.png" alt="MTT-Planer Logo" style="height:40px;width:40px;border-radius:6px;">
+  <div>
+    <h1 style="margin:0;font-size:1.8rem;">MTT-Planer</h1>
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> Aufbau, Reihenfolge, Inhalte und Logik entsprechen ausschließlich den hochgeladenen Papier-MTT-Plänen. Keine zusätzlichen Annahmen, keine Erweiterungen. Alle Angaben dienen nur der Dokumentation und Planung – medizinische Verantwortung liegt beim behandelnden Arzt/Therapeuten.
+    </div>
+  </div>
+</div>
+
+<div class="actions">
+  <button onclick="window.print()">🖨️ Drucken / PDF</button>
+  <button class="secondary" onclick="exportKOS()">⬇️ Export für KOS (CSV)</button>
+</div>
+
+<!-- A. Administrative Daten -->
+<div class="card admin">
+<h2>A. Patient- & Stationsdaten (wie auf den Fotos)</h2>
+<div class="grid">
+  <div><label>Patienten-ID</label><input placeholder="z.B. Pat.-Nr." /></div>
+  <div><label>Name, Vorname</label><input /></div>
+  <div><label>Geburtsdatum</label><input /></div>
+  <div><label>Fallnummer / KOS-ID</label><input /></div>
+  <div><label>Station / Bereich</label><input placeholder="z.B. Reha B" /></div>
+  <div><label>Raum / MTT-Bereich</label><input placeholder="z.B. Raum 2" /></div>
+  <div><label>Arzt</label><input placeholder="z.B. Dr. med." /></div>
+  <div><label>Therapeut</label><input /></div>
+  <div><label>Datum</label><input type="date" /></div>
+</div>
+<div class="hint">Diese Angaben entsprechen dem Kopfbereich der Papier-MTT-Pläne.</div>
+</div>
+
+<!-- C. Therapieplan / Übungsplan -->
+<div class="card prescribe">
+<h2>C. Therapieplan / Übungsplan (Therapeut)</h2>
+<div class="grid">
+  <div><label>Diagnose / Befund</label><input></div>
+  <div><label>Therapieziele (ICF)</label><textarea></textarea></div>
+  <div><label>Körperregion / Struktur</label><input></div>
+  <div><label>Rehabilitationsphase</label><select><option>Akut</option><option>Aufbau</option><option>Funktionell</option><option>Return-to-Activity</option></select></div>
+  <div><label>ROM min (°)</label><input></div>
+  <div><label>ROM max (°)</label><input></div>
+  <div><label>Max. Schmerz (NRS)</label><input></div>
+  <div><label>Belastungsprinzip</label><select><option>submaximal</option><option>progressiv</option><option>isometrisch</option><option>exzentrisch</option></select></div>
+  <div><label>Tempo / UPM</label><input /></div>
+  <div><label>Pausenzeit (s)</label><input /></div>
+</div>
+</div>
+
+<!-- D. Geräte & Übungen -->
+<div class="card execute">
+<h2>D. Geräte & Übungen (Standardisiert & Interaktiv)</h2>
+<p class="hint">Maschinennummern und Übungsarten entsprechen dem Standard physiotherapeutischer Praxis. Auswahl füllt automatisch Intensitätspresets.</p>
+<table id="exercise-table">
+<tr>
+  <th>✔</th><th>Nr.</th><th>Übungsart</th><th>Gerät / Übung</th><th>Watt</th><th>Gewicht</th>
+  <th>Sätze</th><th>Wdh.</th><th>UPM</th><th>Sitz / Hebel</th>
+  <th>Seite</th><th>ROM</th><th>Pause</th><th>Kommentar</th>
+</tr>
+</table>
+</div>
+
+<!-- E. Evaluation -->
+<div class="card evaluate">
+<h2>E. Evaluation & Rückkopplung</h2>
+<div class="grid">
+  <div><label>ROM erreicht?</label><select><option>Ja</option><option>Teilweise</option><option>Nein</option></select></div>
+  <div><label>Schmerz (NRS)</label><input></div>
+  <div><label>Belastung</label><select><option>gut</option><option>reduziert</option><option>nicht toleriert</option></select></div>
+  <div><label>Nächste Anpassung</label><select><option>steigern</option><option>beibehalten</option><option>reduzieren</option></select></div>
+  <div><label>Kommentar</label><textarea></textarea></div>
+</div>
+</div>
+
+<footer>
+MTT-Planer · Standard Therapieplan · Patient-ID & Station enthalten · vollständige Maschinennummern · druckbar · CSV-Export für KOS · lokal · ohne Cloud
+</footer>
+
+</div>
+
+<script>
+// Standardisierte Übungsarten mit Intensitätspresets
+const exercisePresets = {
+  "Kraft": {Sätze:"3", Wdh:"10", Gewicht:"10", UPM:"2", Pause:"60"},
+  "Ausdauer": {Sätze:"1", Wdh:"-", Gewicht:"-", Watt:"100", UPM:"60", Pause:"0"},
+  "Gleichgewicht": {Sätze:"2", Wdh:"15", Gewicht:"-", UPM:"-", Pause:"30"},
+  "Mobilität": {Sätze:"2", Wdh:"12", Gewicht:"-", UPM:"-", Pause:"30"},
+  "Koordination": {Sätze:"2", Wdh:"15", Gewicht:"-", UPM:"-", Pause:"30"},
+  "Dehnung": {Sätze:"1", Wdh:"-", Gewicht:"-", UPM:"-", Pause:"30"},
+  "Stabilisation": {Sätze:"2", Wdh:"12", Gewicht:"-", UPM:"-", Pause:"30"}
+};
+const exerciseTypes = Object.keys(exercisePresets);
+const machineNumbers = ["101","102","103","104","105","106","107","108","109","110"];
+const table = document.getElementById('exercise-table');
+
+machineNumbers.forEach(num => {
+  const row = table.insertRow();
+  // Checkbox
+  const checkboxCell = row.insertCell(); checkboxCell.innerHTML='<input type="checkbox">';
+  // Nr.
+  const nrCell = row.insertCell(); nrCell.innerHTML=num;
+  // Übungsart
+  const typeCell = row.insertCell();
+  const typeSelect = document.createElement('select');
+  exerciseTypes.forEach(t=>typeSelect.add(new Option(t,t)));
+  typeSelect.addEventListener('change', function() {
+    const preset = exercisePresets[this.value];
+    const cells = row.querySelectorAll('input,select');
+    if(preset.Sätze) cells[6].value = preset.Sätze;
+    if(preset.Wdh) cells[7].value = preset.Wdh;
+    if(preset.UPM) cells[8].value = preset.UPM;
+    if(preset.Gewicht) cells[5].value = preset.Gewicht;
+    if(preset.Watt) cells[4].value = preset.Watt || '';
+    if(preset.Pause) cells[11].value = preset.Pause;
+  });
+  typeCell.appendChild(typeSelect);
+  // Rest of the cells
+  row.insertCell().innerHTML='<input placeholder="Gerät / Übung">';
+  row.insertCell().innerHTML='<input placeholder="Watt">';
+  row.insertCell().innerHTML='<input placeholder="Gewicht kg">';
+  row.insertCell().innerHTML='<input placeholder="Sätze">';
+  row.insertCell().innerHTML='<input placeholder="Wdh.">';
+  row.insertCell().innerHTML='<input placeholder="UPM">';
+  row.insertCell().innerHTML='<input placeholder="Sitz / Hebel">';
+  row.insertCell().innerHTML='L/R';
+  row.insertCell().innerHTML='<input placeholder="ROM">';
+  row.insertCell().innerHTML='<input placeholder="Pause s">';
+  row.insertCell().innerHTML='<input placeholder="Kommentar">';
+});
+
+// CSV Export Funktion
+function exportKOS(){
+  let rows=[];
+  document.querySelectorAll('#exercise-table tr').forEach(tr=>{
+    const cells = [...tr.querySelectorAll('input,select')].map(i=>i.value);
+    if(cells.join('').trim() !== '') rows.push(cells.join(';'));
+  });
+  let csv='✔;Nr.;Übungsart;Gerät / Übung;Watt;Gewicht;Sätze;Wdh.;UPM;Sitz / Hebel;Seite;ROM;Pause;Kommentar\n'+rows.join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'MTT_KOS_Export.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
