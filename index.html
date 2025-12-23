@@ -3,18 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MTT-Planer – Klinikversion</title>
+<title>MTT PLANNER </title>
 
 <style>
 body{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  background:#f5f7fa;margin:0;padding:12px;color:#1f2937
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f5f7fa;
+  margin:0;
+  padding:12px;
+  color:#111827
 }
 h1,h2{margin:0 0 8px}
-.container{max-width:1100px;margin:auto}
 .card{
-  background:#fff;border-radius:10px;padding:12px;margin-bottom:12px;
-  box-shadow:0 2px 8px rgba(0,0,0,.08)
+  background:#fff;
+  border-radius:8px;
+  padding:12px;
+  margin-bottom:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08)
 }
 .grid{
   display:grid;
@@ -22,60 +27,76 @@ h1,h2{margin:0 0 8px}
   gap:8px
 }
 input,select,textarea{
-  width:100%;padding:8px;border-radius:6px;
-  border:1px solid #cbd5e1;font-size:.8rem
+  width:100%;
+  padding:6px;
+  border:1px solid #cbd5e1;
+  border-radius:6px;
+  font-size:12px
 }
 textarea{resize:vertical}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 button{
-  padding:10px;border-radius:8px;border:none;
-  background:#0284c7;color:#fff;font-size:.85rem;cursor:pointer
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  background:#0284c7;
+  color:#fff;
+  font-size:13px;
+  cursor:pointer
 }
 button.secondary{background:#334155}
 button.warn{background:#dc2626}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 
-.admin{border-left:4px solid #ca8a04}
-.plan{border-left:4px solid #0284c7}
-.exec{border-left:4px solid #16a34a}
-.eval{border-left:4px solid #ea580c}
-
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.75rem;min-width:1100px}
-th{background:#0284c7;color:#fff;padding:6px;white-space:nowrap}
-td{border-bottom:1px solid #e2e8f0;padding:6px;text-align:center}
-
-.print-value{display:none;font-size:12px;white-space:pre-wrap}
-
-@media print{
-  .actions,button{display:none}
-  input,select,textarea{display:none}
-  .print-value{display:inline}
-  #exerciseTable tr{display:none}
-  #exerciseTable tr.printable{display:table-row}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px;
+  min-width:1200px
+}
+th{
+  background:#0284c7;
+  color:#fff;
+  padding:6px;
+  white-space:nowrap
+}
+td{
+  border-bottom:1px solid #e5e7eb;
+  padding:4px;
+  text-align:center
 }
 
-footer{text-align:center;font-size:.7rem;color:#6b7280;margin-top:16px}
+.table-wrap{overflow-x:auto}
+
+/* screen / print separation */
+.screen-only{}
+.print-only{display:none}
+
+@media print{
+  body{background:#fff}
+  .screen-only{display:none}
+  .print-only{display:block}
+  button,.actions{display:none}
+}
 </style>
 </head>
 
 <body>
-<div class="container">
 
-<h1>MTT-Therapieplan</h1>
-<div style="font-size:.75rem;color:#475569;margin-bottom:10px">
-Offline · Druckfähig · Patientenspezifisch
-</div>
+<h1>MTT Therapieplan</h1>
 
-<div class="actions">
+<div class="actions screen-only">
   <button onclick="savePatient()">💾 Speichern</button>
   <button class="secondary" onclick="loadPatient()">📂 Laden</button>
   <button class="warn" onclick="deletePatient()">🗑️ Löschen</button>
-  <button onclick="quickPrint()">🖨️ Patient-PDF</button>
+  <button onclick="printPDF()">🖨️ PDF drucken</button>
 </div>
 
-<!-- A -->
-<div class="card admin">
-<h2>A. Patient & Organisation</h2>
+<!-- ================= SCREEN ================= -->
+
+<div class="screen-only">
+
+<div class="card">
+<h2>A. Patient</h2>
 <div class="grid">
   <input id="pid" placeholder="Patienten-ID">
   <input id="name" placeholder="Name">
@@ -86,9 +107,8 @@ Offline · Druckfähig · Patientenspezifisch
 </div>
 </div>
 
-<!-- B -->
-<div class="card plan">
-<h2>B. Therapieplanung</h2>
+<div class="card">
+<h2>B. Planung</h2>
 <div class="grid">
   <input id="diagnose" placeholder="Diagnose">
   <textarea id="icf" placeholder="ICF-Ziele"></textarea>
@@ -103,36 +123,73 @@ Offline · Druckfähig · Patientenspezifisch
 </div>
 </div>
 
-<!-- C -->
-<div class="card exec">
-<h2 onclick="toggleExercises()" style="cursor:pointer">
-C. Geräte & Übungen ⬇
-</h2>
-
-<div id="exerciseContent" class="table-wrap">
-<table id="exerciseTable">
+<div class="card">
+<h2>C. Geräte & Übungen</h2>
+<div class="table-wrap">
+<table id="exerciseInput">
 <tr>
-  <th>✔</th><th>Nr</th><th>Art</th><th>Gerät</th>
-  <th>Watt</th><th>kg</th><th>Sätze</th>
-  <th>Wdh</th><th>UPM</th><th>Pause</th><th>Kommentar</th>
+<th>✔</th><th>Nr</th><th>Art</th><th>Gerät</th>
+<th>Watt</th><th>kg</th><th>Sätze</th>
+<th>Wdh</th><th>UPM</th><th>Pause</th><th>Kommentar</th>
 </tr>
 </table>
 </div>
 </div>
 
-<!-- D -->
-<div class="card eval">
+<div class="card">
 <h2>D. Evaluation</h2>
 <div class="grid">
   <select id="evalROM">
     <option value="">ROM erreicht?</option>
-    <option>Ja</option><option>Teilweise</option><option>Nein</option>
+    <option>Ja</option>
+    <option>Teilweise</option>
+    <option>Nein</option>
   </select>
-  <textarea id="evalNote" placeholder="Verlauf / Evaluation"></textarea>
+  <textarea id="evalNote" placeholder="Verlauf / Bemerkungen"></textarea>
 </div>
 </div>
 
-<footer>MTT-Planer · Single-HTML · Klinikstandard</footer>
+</div>
+
+<!-- ================= PRINT ================= -->
+
+<div class="print-only">
+
+<div class="card">
+<h2>Patient</h2>
+<p><b>ID:</b> <span id="p_pid"></span></p>
+<p><b>Name:</b> <span id="p_name"></span></p>
+<p><b>Geburtsdatum:</b> <span id="p_dob"></span></p>
+<p><b>Station:</b> <span id="p_station"></span></p>
+<p><b>Therapeut:</b> <span id="p_therapeut"></span></p>
+<p><b>Datum:</b> <span id="p_datum"></span></p>
+</div>
+
+<div class="card">
+<h2>Therapieplanung</h2>
+<p><b>Diagnose:</b> <span id="p_diagnose"></span></p>
+<p><b>Phase:</b> <span id="p_phase"></span></p>
+<p><b>ICF-Ziele:</b><br><span id="p_icf"></span></p>
+<p><b>Schmerz:</b> <span id="p_schmerz"></span></p>
+</div>
+
+<div class="card">
+<h2>MTT Übungen</h2>
+<table id="exercisePrint">
+<tr>
+<th>Nr</th><th>Art</th><th>Gerät</th>
+<th>Watt</th><th>kg</th><th>Sätze</th>
+<th>Wdh</th><th>UPM</th><th>Pause</th><th>Kommentar</th>
+</tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Evaluation</h2>
+<p><b>ROM:</b> <span id="p_evalROM"></span></p>
+<p><b>Bemerkung:</b><br><span id="p_evalNote"></span></p>
+</div>
+
 </div>
 
 <script>
@@ -142,27 +199,27 @@ const geraete=[
 "Ruderergometer","Beinpresse","Beinstrecker","Beinbeuger","Adduktor","Abduktor",
 "Latzug","Ruderzug","Butterfly","Chest Press","Shoulder Press","Seilzug",
 "Rumpfstrecker","Rumpfbeuger","Rotationstrainer","Hüftstrecker","Hüftbeuger",
-"Kabelzug","Zirkelstation Beine","Zirkelstation Arme","Zirkelstation Rumpf",
+"Kabelzug","Zirkel Beine","Zirkel Arme","Zirkel Rumpf",
 "Koordinationsleiter","Balance Board","TheraBand","Freihanteln","Kettlebell",
 "Medizinball","Handkurbel","Crosstrainer","Step Board","Sling Trainer",
 "Power Plate","Schlingentisch","Sprossenwand","Therapiekreisel","Bosu Ball",
-"Trampolin","Isokinetik","Air Bike","Ergometer","Gangtrainer","Treppentrainer",
+"Trampolin","Isokinetik","Air Bike","Gangtrainer","Treppentrainer",
 "Stehtrainer","Rollstuhltrainer","Core Trainer","Wall Pulley"
 ];
 
 /* Presets */
 const presets={
-  Kraft:{s:"3",w:"10",u:"",g:"10",wa:""},
-  Ausdauer:{s:"1",w:"",u:"60",g:"",wa:"100"},
-  Mobilität:{s:"2",w:"12",u:"",g:"",wa:""},
-  Stabilisation:{s:"2",w:"12",u:"",g:"",wa:""}
+  Kraft:{s:"3",w:"10"},
+  Ausdauer:{u:"60",wa:"100"},
+  Mobilität:{s:"2",w:"12"},
+  Stabilisation:{s:"2",w:"12"}
 };
 
-const table=document.getElementById("exerciseTable");
+const inputTable=document.getElementById("exerciseInput");
 
-/* Build 70 rows */
+/* build 70 rows */
 for(let i=1;i<=70;i++){
-  const r=table.insertRow();
+  const r=inputTable.insertRow();
   r.innerHTML=`
 <td><input type="checkbox"></td>
 <td>${i}</td>
@@ -175,69 +232,100 @@ for(let i=1;i<=70;i++){
 <option>Stabilisation</option>
 </select>
 </td>
-<td><select><option value="">Gerät</option>${geraete.map(g=>`<option>${g}</option>`).join("")}</select></td>
+<td>
+<select><option value=""></option>
+${geraete.map(g=>`<option>${g}</option>`).join("")}
+</select>
+</td>
 <td><input></td><td><input></td><td><input></td>
 <td><input></td><td><input></td><td><input></td><td><input></td>`;
 }
 
-/* Preset */
 function applyPreset(sel){
-  const p=presets[sel.value]; if(!p) return;
-  const i=sel.closest("tr").querySelectorAll("input,select");
-  i[6].value=p.s; i[7].value=p.w; i[8].value=p.u;
-  i[5].value=p.g; i[4].value=p.wa;
+  const p=presets[sel.value];
+  if(!p) return;
+  const cells=sel.closest("tr").querySelectorAll("input");
+  if(p.s) cells[2].value=p.s;
+  if(p.w) cells[3].value=p.w;
 }
 
-/* Collapse */
-function toggleExercises(){
-  const el=document.getElementById("exerciseContent");
-  el.style.display = el.style.display==="none" ? "block" : "none";
-}
+/* PRINT */
+function printPDF(){
+  /* patient */
+  p_pid.textContent=pid.value;
+  p_name.textContent=name.value;
+  p_dob.textContent=dob.value;
+  p_station.textContent=station.value;
+  p_therapeut.textContent=therapeut.value;
+  p_datum.textContent=datum.value;
 
-/* Print FIX */
-function preparePrint(){
-  document.querySelectorAll("input,select,textarea").forEach(el=>{
-    if(el.type==="checkbox") return;
-    let s=el.parentElement.querySelector(".print-value");
-    if(!s){ s=document.createElement("div"); s.className="print-value"; el.parentElement.appendChild(s); }
-    s.textContent=el.value || "—";
+  p_diagnose.textContent=diagnose.value;
+  p_phase.textContent=phase.value;
+  p_icf.textContent=icf.value;
+  p_schmerz.textContent=schmerz.value;
+
+  p_evalROM.textContent=evalROM.value;
+  p_evalNote.textContent=evalNote.value;
+
+  /* exercises */
+  const printTable=document.getElementById("exercisePrint");
+  printTable.innerHTML=printTable.rows[0].outerHTML;
+
+  [...inputTable.rows].slice(1).forEach(r=>{
+    const checked=r.cells[0].querySelector("input").checked;
+    const vals=[
+      r.cells[1].textContent,
+      r.cells[2].querySelector("select").value,
+      r.cells[3].querySelector("select").value,
+      r.cells[4].querySelector("input").value,
+      r.cells[5].querySelector("input").value,
+      r.cells[6].querySelector("input").value,
+      r.cells[7].querySelector("input").value,
+      r.cells[8].querySelector("input").value,
+      r.cells[9].querySelector("input").value,
+      r.cells[10].querySelector("input").value
+    ];
+    if(checked || vals.some(v=>v)){
+      const pr=printTable.insertRow();
+      vals.forEach(v=>pr.insertCell().textContent=v||"—");
+    }
   });
 
-  [...table.rows].forEach((r,i)=>{
-    if(i===0){ r.classList.add("printable"); return; }
-    const cb=r.querySelector("input[type=checkbox]");
-    const meaningful=[...r.querySelectorAll("input,select")]
-      .filter(e=>e.type!=="checkbox")
-      .some(e=>e.value && e.value!=="");
-    if(cb.checked || meaningful) r.classList.add("printable");
-    else r.classList.remove("printable");
-  });
+  window.print();
 }
-function quickPrint(){ preparePrint(); window.print(); }
 
-/* Save / Load */
+/* SAVE / LOAD */
 function savePatient(){
   const data={};
-  document.querySelectorAll("input,select,textarea").forEach(e=>{ if(e.id) data[e.id]=e.value; });
-  data.ex=[...table.rows].slice(1).map(r=>
+  document.querySelectorAll("input,select,textarea").forEach(e=>{
+    if(e.id) data[e.id]=e.value;
+  });
+  data.ex=[...inputTable.rows].slice(1).map(r=>
     [...r.querySelectorAll("input,select")].map(e=>e.type==="checkbox"?e.checked:e.value)
   );
   localStorage.setItem("MTT_"+pid.value,JSON.stringify(data));
   alert("Gespeichert");
 }
+
 function loadPatient(){
   const d=JSON.parse(localStorage.getItem("MTT_"+pid.value));
   if(!d) return alert("Nicht gefunden");
-  document.querySelectorAll("input,select,textarea").forEach(e=>{ if(e.id&&d[e.id]) e.value=d[e.id]; });
+  document.querySelectorAll("input,select,textarea").forEach(e=>{
+    if(e.id && d[e.id]!==undefined) e.value=d[e.id];
+  });
   d.ex.forEach((row,i)=>{
-    const c=[...table.rows[i+1].querySelectorAll("input,select")];
-    row.forEach((v,j)=>c[j].type==="checkbox"?c[j].checked=v:c[j].value=v);
+    const cells=[...inputTable.rows[i+1].querySelectorAll("input,select")];
+    row.forEach((v,j)=>{
+      cells[j].type==="checkbox"?cells[j].checked=v:cells[j].value=v;
+    });
   });
 }
+
 function deletePatient(){
   localStorage.removeItem("MTT_"+pid.value);
   alert("Gelöscht");
 }
 </script>
+
 </body>
 </html>
