@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MTT Planner</title>
+<title>MTT-Planer – Klinikversion</title>
 
 <style>
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  background:#f3f4f6;margin:0;padding:12px;color:#111827
+  background:#f5f7fa;margin:0;padding:12px;color:#1f2937
 }
 h1,h2{margin:0 0 8px}
-.container{max-width:1000px;margin:auto}
+.container{max-width:1100px;margin:auto}
 .card{
-  background:#fff;border-radius:12px;padding:12px;margin-bottom:12px;
-  box-shadow:0 2px 10px rgba(0,0,0,.08)
+  background:#fff;border-radius:10px;padding:12px;margin-bottom:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08)
 }
 .grid{
   display:grid;
@@ -23,7 +23,7 @@ h1,h2{margin:0 0 8px}
 }
 input,select,textarea{
   width:100%;padding:8px;border-radius:6px;
-  border:1px solid #cbd5e1;font-size:.85rem
+  border:1px solid #cbd5e1;font-size:.8rem
 }
 textarea{resize:vertical}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
@@ -41,10 +41,10 @@ button.warn{background:#dc2626}
 
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.75rem;min-width:1100px}
-th{background:#0284c7;color:#fff;padding:6px}
-td{border-bottom:1px solid #e5e7eb;padding:6px;text-align:center}
+th{background:#0284c7;color:#fff;padding:6px;white-space:nowrap}
+td{border-bottom:1px solid #e2e8f0;padding:6px;text-align:center}
 
-.print-value{display:none;font-size:12px}
+.print-value{display:none;font-size:12px;white-space:pre-wrap}
 
 @media print{
   .actions,button{display:none}
@@ -61,9 +61,9 @@ footer{text-align:center;font-size:.7rem;color:#6b7280;margin-top:16px}
 <body>
 <div class="container">
 
-<h1>MTT-PLANNER</h1>
+<h1>MTT-Therapieplan</h1>
 <div style="font-size:.75rem;color:#475569;margin-bottom:10px">
-Lokal. Souvrän. Mobile FHIR
+Offline · Druckfähig · Patientenspezifisch
 </div>
 
 <div class="actions">
@@ -73,7 +73,7 @@ Lokal. Souvrän. Mobile FHIR
   <button onclick="quickPrint()">🖨️ Patient-PDF</button>
 </div>
 
-<!-- A ADMIN -->
+<!-- A -->
 <div class="card admin">
 <h2>A. Patient & Organisation</h2>
 <div class="grid">
@@ -86,21 +86,24 @@ Lokal. Souvrän. Mobile FHIR
 </div>
 </div>
 
-<!-- B PLAN -->
+<!-- B -->
 <div class="card plan">
 <h2>B. Therapieplanung</h2>
 <div class="grid">
   <input id="diagnose" placeholder="Diagnose">
   <textarea id="icf" placeholder="ICF-Ziele"></textarea>
   <select id="phase">
-    <option>Akut</option><option>Aufbau</option>
-    <option>Funktionell</option><option>Return-to-Activity</option>
+    <option value="">Rehaphase</option>
+    <option>Akut</option>
+    <option>Aufbau</option>
+    <option>Funktionell</option>
+    <option>Return-to-Activity</option>
   </select>
   <input id="schmerz" placeholder="Max. Schmerz (NRS)">
 </div>
 </div>
 
-<!-- C EXERCISES -->
+<!-- C -->
 <div class="card exec">
 <h2 onclick="toggleExercises()" style="cursor:pointer">
 C. Geräte & Übungen ⬇
@@ -110,121 +113,131 @@ C. Geräte & Übungen ⬇
 <table id="exerciseTable">
 <tr>
   <th>✔</th><th>Nr</th><th>Art</th><th>Gerät</th>
-  <th>Intensität</th><th>Sätze</th><th>Wdh/Min</th>
-  <th>Pause</th><th>Kommentar</th>
+  <th>Watt</th><th>kg</th><th>Sätze</th>
+  <th>Wdh</th><th>UPM</th><th>Pause</th><th>Kommentar</th>
 </tr>
 </table>
 </div>
 </div>
 
-<!-- D EVAL -->
+<!-- D -->
 <div class="card eval">
 <h2>D. Evaluation</h2>
 <div class="grid">
   <select id="evalROM">
-    <option>ROM erreicht?</option>
+    <option value="">ROM erreicht?</option>
     <option>Ja</option><option>Teilweise</option><option>Nein</option>
   </select>
-  <textarea id="evalNote" placeholder="Evaluation / Verlauf"></textarea>
+  <textarea id="evalNote" placeholder="Verlauf / Evaluation"></textarea>
 </div>
 </div>
 
-<footer>MTT-Planer · Konzept&IP Moustafa Ali agentic@virtualcaresolution.de  mostischmidbauer@web.de</footer>
+<footer>MTT-Planer · Single-HTML · Klinikstandard</footer>
 </div>
 
 <script>
+/* Geräte */
 const geraete=[
-"Laufband","Fahrradergometer","Arm-Ergometer","Ellipsentrainer",
-"Stepper","Ruderergometer","Beinpresse","Beinstrecker","Beinbeuger",
-"Adduktor","Abduktor","Latzug","Ruderzug","Butterfly","Butterfly Reverse",
-"Chest Press","Shoulder Press","Seilzug","Rumpfstrecker","Rumpfbeuger",
-"Rotationstrainer","Hüftstrecker","Hüftbeuger","Kniebeuge","Smith Machine",
-"Multipresse","Kabelzug","Zirkelstation 1","Zirkelstation 2","Zirkelstation 3",
-"Koordinationsleiter","Balance Board","TheraBand","Freihanteln",
-"Kettlebell","Medizinball","Handkurbel","Oberkörperergometer",
-"Unterkörperergometer","Crosstrainer","Step Board","Slackline",
-"Vibrationstrainer","Sling Trainer","Power Plate","Kletterwand",
-"Pedaltrainer","Rollbrett","Therapiekreisel","Bosu Ball",
-"Trampolin","Isokinetik","Ergoometer","Air Bike",
-"Sprossenwand","Schlingentisch","Wall Pulley"
+"Laufband","Fahrradergometer","Arm-Ergometer","Ellipsentrainer","Stepper",
+"Ruderergometer","Beinpresse","Beinstrecker","Beinbeuger","Adduktor","Abduktor",
+"Latzug","Ruderzug","Butterfly","Chest Press","Shoulder Press","Seilzug",
+"Rumpfstrecker","Rumpfbeuger","Rotationstrainer","Hüftstrecker","Hüftbeuger",
+"Kabelzug","Zirkelstation Beine","Zirkelstation Arme","Zirkelstation Rumpf",
+"Koordinationsleiter","Balance Board","TheraBand","Freihanteln","Kettlebell",
+"Medizinball","Handkurbel","Crosstrainer","Step Board","Sling Trainer",
+"Power Plate","Schlingentisch","Sprossenwand","Therapiekreisel","Bosu Ball",
+"Trampolin","Isokinetik","Air Bike","Ergometer","Gangtrainer","Treppentrainer",
+"Stehtrainer","Rollstuhltrainer","Core Trainer","Wall Pulley"
 ];
+
+/* Presets */
+const presets={
+  Kraft:{s:"3",w:"10",u:"",g:"10",wa:""},
+  Ausdauer:{s:"1",w:"",u:"60",g:"",wa:"100"},
+  Mobilität:{s:"2",w:"12",u:"",g:"",wa:""},
+  Stabilisation:{s:"2",w:"12",u:"",g:"",wa:""}
+};
 
 const table=document.getElementById("exerciseTable");
 
-/* build 70 rows */
+/* Build 70 rows */
 for(let i=1;i<=70;i++){
   const r=table.insertRow();
   r.innerHTML=`
 <td><input type="checkbox"></td>
 <td>${i}</td>
 <td>
-<select>
+<select onchange="applyPreset(this)">
+<option value="">–</option>
 <option>Kraft</option>
 <option>Ausdauer</option>
 <option>Mobilität</option>
 <option>Stabilisation</option>
 </select>
 </td>
-<td><select>${geraete.map(g=>`<option>${g}</option>`).join("")}</select></td>
-<td><input></td>
-<td><input></td>
-<td><input></td>
-<td><input></td>
-<td><input></td>`;
+<td><select><option value="">Gerät</option>${geraete.map(g=>`<option>${g}</option>`).join("")}</select></td>
+<td><input></td><td><input></td><td><input></td>
+<td><input></td><td><input></td><td><input></td><td><input></td>`;
 }
 
-/* collapsible */
+/* Preset */
+function applyPreset(sel){
+  const p=presets[sel.value]; if(!p) return;
+  const i=sel.closest("tr").querySelectorAll("input,select");
+  i[6].value=p.s; i[7].value=p.w; i[8].value=p.u;
+  i[5].value=p.g; i[4].value=p.wa;
+}
+
+/* Collapse */
 function toggleExercises(){
   const el=document.getElementById("exerciseContent");
   el.style.display = el.style.display==="none" ? "block" : "none";
 }
 
-/* save/load */
+/* Print FIX */
+function preparePrint(){
+  document.querySelectorAll("input,select,textarea").forEach(el=>{
+    if(el.type==="checkbox") return;
+    let s=el.parentElement.querySelector(".print-value");
+    if(!s){ s=document.createElement("div"); s.className="print-value"; el.parentElement.appendChild(s); }
+    s.textContent=el.value || "—";
+  });
+
+  [...table.rows].forEach((r,i)=>{
+    if(i===0){ r.classList.add("printable"); return; }
+    const cb=r.querySelector("input[type=checkbox]");
+    const meaningful=[...r.querySelectorAll("input,select")]
+      .filter(e=>e.type!=="checkbox")
+      .some(e=>e.value && e.value!=="");
+    if(cb.checked || meaningful) r.classList.add("printable");
+    else r.classList.remove("printable");
+  });
+}
+function quickPrint(){ preparePrint(); window.print(); }
+
+/* Save / Load */
 function savePatient(){
   const data={};
-  document.querySelectorAll("input,select,textarea").forEach(e=>{
-    if(e.id) data[e.id]=e.value;
-  });
-  data.exercises=[...table.rows].slice(1).map(r=>
+  document.querySelectorAll("input,select,textarea").forEach(e=>{ if(e.id) data[e.id]=e.value; });
+  data.ex=[...table.rows].slice(1).map(r=>
     [...r.querySelectorAll("input,select")].map(e=>e.type==="checkbox"?e.checked:e.value)
   );
   localStorage.setItem("MTT_"+pid.value,JSON.stringify(data));
   alert("Gespeichert");
 }
-
 function loadPatient(){
   const d=JSON.parse(localStorage.getItem("MTT_"+pid.value));
-  if(!d)return alert("Nicht gefunden");
-  document.querySelectorAll("input,select,textarea").forEach(e=>{
-    if(e.id&&d[e.id]!==undefined) e.value=d[e.id];
-  });
-  d.exercises.forEach((row,i)=>{
-    const cells=[...table.rows[i+1].querySelectorAll("input,select")];
-    row.forEach((v,j)=>cells[j].type==="checkbox"?cells[j].checked=v:cells[j].value=v);
+  if(!d) return alert("Nicht gefunden");
+  document.querySelectorAll("input,select,textarea").forEach(e=>{ if(e.id&&d[e.id]) e.value=d[e.id]; });
+  d.ex.forEach((row,i)=>{
+    const c=[...table.rows[i+1].querySelectorAll("input,select")];
+    row.forEach((v,j)=>c[j].type==="checkbox"?c[j].checked=v:c[j].value=v);
   });
 }
-
 function deletePatient(){
   localStorage.removeItem("MTT_"+pid.value);
   alert("Gelöscht");
 }
-
-/* print fix */
-function preparePrint(){
-  document.querySelectorAll("input,select,textarea").forEach(el=>{
-    let s=el.parentElement.querySelector(".print-value");
-    if(!s){s=document.createElement("span");s.className="print-value";el.parentElement.appendChild(s);}
-    s.textContent=el.value||"";
-  });
-  [...table.rows].forEach((r,i)=>{
-    if(i===0){r.classList.add("printable");return;}
-    const cb=r.querySelector("input[type=checkbox]");
-    const filled=[...r.querySelectorAll("input,select")].some(e=>e.value);
-    if(cb.checked||filled) r.classList.add("printable");
-    else r.classList.remove("printable");
-  });
-}
-function quickPrint(){preparePrint();window.print();}
 </script>
 </body>
 </html>
