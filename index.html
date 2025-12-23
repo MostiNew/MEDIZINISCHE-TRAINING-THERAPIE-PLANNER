@@ -3,229 +3,215 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MTT-Planer – Therapieplan, Print & KOS / FHIR Export</title>
+<title>MTT-Therapieplan (KOS)</title>
 
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f7fa;margin:0;padding:20px;color:#1f2937}
-h1,h2{margin:0 0 10px}
-.container{max-width:1800px;margin:auto}
-.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,.06)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-input,select,textarea{width:100%;padding:6px;border-radius:6px;border:1px solid #cbd5e1;font-size:.75rem}
-textarea{resize:vertical}
-.actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-button{padding:8px 14px;border-radius:8px;border:none;background:#0284c7;color:#fff;font-size:.8rem;cursor:pointer}
-button.secondary{background:#334155}
-.admin{background:#fefce8;border-left:5px solid #ca8a04}
-.prescribe{background:#ecfeff;border-left:5px solid #0284c7}
-.execute{background:#f0fdf4;border-left:5px solid #16a34a}
-.evaluate{background:#fff7ed;border-left:5px solid #ea580c}
-table{width:100%;border-collapse:collapse;font-size:.75rem}
-th{background:#0284c7;color:#fff;padding:6px}
-td{border-bottom:1px solid #e2e8f0;padding:6px;text-align:center}
-tr:hover td{background:#e0f2fe}
-footer{text-align:center;font-size:.7rem;color:#6b7280;margin-top:24px}
-@media print{.actions{display:none}body{background:#fff}}
+body{
+  font-family:system-ui,-apple-system,BlinkMacSystemFont;
+  background:#f4f6f8;
+  margin:0;
+  padding:10px;
+  font-size:14px;
+}
+h1{font-size:1.4rem}
+.card{
+  background:#fff;
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:14px;
+  box-shadow:0 4px 10px rgba(0,0,0,.06);
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.75rem;
+}
+th,td{
+  padding:6px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:center;
+}
+th{
+  background:#0369a1;
+  color:white;
+}
+select,input{
+  width:100%;
+  padding:4px;
+  border-radius:6px;
+  border:1px solid #cbd5e1;
+  font-size:.75rem;
+}
+@media(max-width:900px){
+  table{font-size:.65rem}
+}
+button{
+  background:#0369a1;
+  color:white;
+  border:none;
+  padding:8px 14px;
+  border-radius:8px;
+  cursor:pointer;
+}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+@media print{.actions{display:none}}
 </style>
 </head>
 
 <body>
-<div class="container">
 
-<!-- HEADER -->
-<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-  <img src="logo.png" style="height:42px;border-radius:6px">
-  <div>
-    <h1>MTT-Planer</h1>
-    <div style="font-size:.7rem;color:#475569">Lokal · Keine Cloud · © Ali Moustafa</div>
-  </div>
-</div>
+<h1>MTT-Therapieplan (druck- & KOS-fähig)</h1>
 
-<!-- ACTIONS -->
 <div class="actions">
   <button onclick="window.print()">🖨️ Drucken / PDF</button>
-  <button class="secondary" onclick="exportCSV()">⬇️ KOS CSV</button>
-  <button class="secondary" onclick="exportJSON()">🔗 KOS JSON</button>
-  <button class="secondary" onclick="exportFHIR()">🏥 FHIR Export</button>
+  <button onclick="exportCSV()">⬇️ KOS CSV</button>
+  <button onclick="exportJSON()">⬇️ KOS JSON</button>
 </div>
 
-<!-- ADMIN -->
-<div class="card admin">
-<h2>A. Patient & Organisation</h2>
-<div class="grid admin-fields">
-  <input placeholder="Patienten-ID">
-  <input placeholder="Name, Vorname">
-  <input placeholder="Geburtsdatum">
-  <input placeholder="Fallnummer / KOS-ID">
-  <input placeholder="Station">
-  <input placeholder="Raum / MTT">
-  <input placeholder="Arzt">
-  <input placeholder="Therapeut">
-  <input type="date">
-</div>
-</div>
-
-<!-- PRESCRIBE -->
-<div class="card prescribe">
-<h2>B. Therapieplanung</h2>
-<div class="grid prescribe-fields">
-  <input placeholder="Diagnose / Befund">
-  <textarea placeholder="Therapieziele (ICF)"></textarea>
-  <input placeholder="Körperregion">
-  <select>
-    <option>Akut</option><option>Aufbau</option>
-    <option>Funktionell</option><option>Return-to-Activity</option>
-  </select>
-  <input placeholder="ROM min">
-  <input placeholder="ROM max">
-  <input placeholder="Schmerz max (NRS)">
-  <select>
-    <option>submaximal</option>
-    <option>progressiv</option>
-    <option>isometrisch</option>
-    <option>exzentrisch</option>
-  </select>
-  <input placeholder="Tempo / UPM">
-  <input placeholder="Pause (s)">
-</div>
-</div>
-
-<!-- EXERCISES -->
-<div class="card execute">
-<h2>C. Geräte & Übungen</h2>
-<table id="exerciseTable">
+<div class="card">
+<table id="mtt">
 <tr>
-<th>✔</th><th>Nr</th><th>Art</th><th>Übung</th>
-<th>Watt</th><th>kg</th><th>Sätze</th><th>Wdh</th>
-<th>UPM</th><th>Sitz</th><th>ROM</th><th>Pause</th><th>Kommentar</th>
+<th>✔</th>
+<th>Nr</th>
+<th>Übungsart</th>
+<th>Gerät</th>
+<th>Belastung</th>
+<th>Watt</th>
+<th>kg</th>
+<th>Sätze</th>
+<th>Wdh</th>
+<th>UPM</th>
+<th>ICF-Ziel</th>
 </tr>
 </table>
 </div>
 
-<!-- EVALUATION -->
-<div class="card evaluate">
-<h2>D. Evaluation</h2>
-<div class="grid">
-  <select><option>ROM erreicht</option><option>teilweise</option><option>nein</option></select>
-  <input placeholder="Schmerz (NRS)">
-  <select><option>Belastung gut</option><option>reduziert</option><option>nicht toleriert</option></select>
-  <textarea placeholder="Kommentar"></textarea>
-</div>
-</div>
-
-<footer>MTT-Planer · GitHub Pages · Lokal · Prototyp</footer>
-</div>
-
 <script>
-const presets={
-  Kraft:{S:"3",W:"10",P:"60"},
-  Ausdauer:{S:"1",W:"-",P:"0"},
-  Mobilität:{S:"2",W:"12",P:"30"},
-  Stabilisation:{S:"2",W:"12",P:"30"}
+// =====================
+// 70 GERÄTE
+// =====================
+const geraete = [
+"Laufband","Fahrradergometer","Arm-Ergometer","Ellipsentrainer","Stepper",
+"Ruderergometer","Sitzergometer","Oberkörper-Ergometer","Seilzug Doppelturm",
+"Latzug","Ruderzug","Butterfly","Chest Press","Shoulder Press",
+"Beinpresse 45°","Beinstrecker","Beinbeuger","Abduktor","Adduktor",
+"Gluteusmaschine","Wadenpresse","Hüftstrecker","Hüftbeuger",
+"Rumpfstrecker","Rumpfbeuger","Rotationstrainer","Lateralflexion Rumpf",
+"Wirbelsäulenmobilisation","Nackenextension","Nackenflexion",
+"Schulterabduktion","Schulteradduktion","Schulterrotation innen",
+"Schulterrotation außen","Bizepsmaschine","Trizepsmaschine",
+"Unterarmtrainer","Handkrafttrainer","Greiftrainer",
+"Balance Board","Wackelbrett","Propriozeptionsplatte",
+"Thera-Band Station","Sprossenwand","Mattenübungen",
+"Kabelzug funktionell","Zirkelstation Beine","Zirkelstation Arme",
+"Zirkelstation Rumpf","Zirkelstation Ganzkörper",
+"Kniebeugenmaschine","Ausfallschritt-Trainer","Core-Trainer",
+"Schlingentrainer","Reaktionswand","Gangtrainer","Treppentrainer",
+"Stehtrainer","Rollstuhltrainer","Arm-Bein-Kombitrainer"
+];
+
+// =====================
+// ICF ZUORDNUNG
+// =====================
+const icfMap = {
+"Ausdauer":"b455 – Belastbarkeit",
+"Kraft":"b730 – Muskelkraft",
+"Stabilisation":"b760 – Kontrolle",
+"Mobilität":"b710 – Beweglichkeit"
 };
 
-const machines=["101","102","103","104","105","106","107","108","109","110"];
-const table=document.getElementById("exerciseTable");
+// =====================
+// BELASTUNGSSTUFEN
+// =====================
+const belastungPreset = {
+"leicht":{kg:10,watt:50,wdh:15,satz:2,upm:50},
+"mittel":{kg:20,watt:80,wdh:12,satz:3,upm:60},
+"schwer":{kg:30,watt:120,wdh:10,satz:4,upm:70}
+};
 
-machines.forEach(n=>{
-  const r=table.insertRow();
-  r.innerHTML=`
-  <td><input type="checkbox"></td>
-  <td>${n}</td>
-  <td>
-    <select onchange="applyPreset(this)">
-      <option></option>
-      <option>Kraft</option>
-      <option>Ausdauer</option>
-      <option>Mobilität</option>
-      <option>Stabilisation</option>
-    </select>
-  </td>
-  <td><input></td><td><input></td><td><input></td>
-  <td><input></td><td><input></td><td><input></td>
-  <td><input></td><td><input></td><td><input></td><td><input></td>`;
-});
-
-function applyPreset(sel){
-  const p=presets[sel.value];
-  if(!p) return;
-  const i=sel.closest("tr").querySelectorAll("input");
-  i[3].value=p.S;
-  i[4].value=p.W;
-  i[9].value=p.P;
+function optionList(arr){
+  return arr.map(v=>`<option>${v}</option>`).join("");
 }
 
+const table = document.getElementById("mtt");
+
+// =====================
+// 70 ZEILEN
+// =====================
+for(let i=1;i<=70;i++){
+  const r = table.insertRow();
+  r.innerHTML = `
+  <td><input type="checkbox"></td>
+  <td>${i}</td>
+  <td>
+    <select onchange="updateICF(this)">
+      <option></option>
+      <option>Ausdauer</option>
+      <option>Kraft</option>
+      <option>Stabilisation</option>
+      <option>Mobilität</option>
+    </select>
+  </td>
+  <td>
+    <select>${optionList(geraete)}</select>
+  </td>
+  <td>
+    <select onchange="applyLoad(this)">
+      <option></option>
+      <option>leicht</option>
+      <option>mittel</option>
+      <option>schwer</option>
+    </select>
+  </td>
+  <td><input></td>
+  <td><input></td>
+  <td><input></td>
+  <td><input></td>
+  <td><input></td>
+  <td><input></td>
+  `;
+}
+
+// =====================
+// AUTO FUNKTIONEN
+// =====================
+function applyLoad(sel){
+  const row = sel.closest("tr");
+  const p = belastungPreset[sel.value];
+  if(!p) return;
+  row.cells[5].querySelector("input").value = p.watt;
+  row.cells[6].querySelector("input").value = p.kg;
+  row.cells[7].querySelector("input").value = p.satz;
+  row.cells[8].querySelector("input").value = p.wdh;
+  row.cells[9].querySelector("input").value = p.upm;
+}
+
+function updateICF(sel){
+  const row = sel.closest("tr");
+  row.cells[10].querySelector("input").value = icfMap[sel.value] || "";
+}
+
+// =====================
+// EXPORTS
+// =====================
 function exportCSV(){
-  let out="Nr;Art;Übung;Watt;kg;Sätze;Wdh;UPM;Pause;Kommentar\n";
-  [...table.rows].slice(1).forEach(r=>{
-    const v=[...r.querySelectorAll("input,select")].map(e=>e.value);
-    if(v.join("").trim()) out+=`${r.cells[1].innerText};${v.slice(1).join(";")}\n`;
+  let csv="";
+  [...table.rows].forEach(r=>{
+    const vals=[...r.querySelectorAll("input,select")].map(e=>e.value);
+    if(vals.join("").trim()) csv+=vals.join(";")+"\n";
   });
-  download(out,"MTT_KOS.csv","text/csv");
+  download(csv,"mtt_kos.csv","text/csv");
 }
 
 function exportJSON(){
-  const json={
-    system:"MTT-Planer",
-    created:new Date().toISOString(),
-    patient:[...document.querySelectorAll(".admin-fields input")].map(i=>i.value),
-    therapy:[...document.querySelectorAll(".prescribe-fields input,textarea,select")].map(i=>i.value),
-    exercises:[...table.rows].slice(1).map(r=>{
-      const i=r.querySelectorAll("input,select");
-      return{nr:r.cells[1].innerText,art:i[1].value,uebung:i[2].value,saetze:i[3].value,wdh:i[4].value};
-    }).filter(e=>Object.values(e).join("").trim())
-  };
-  download(JSON.stringify(json,null,2),"MTT_KOS.json","application/json");
-}
-
-function exportFHIR(){
-  const admin=document.querySelectorAll(".admin-fields input");
-  const prescribe=document.querySelectorAll(".prescribe-fields input,textarea,select");
-
-  const Patient={
-    resourceType:"Patient",
-    id:admin[0].value||"patient-1",
-    name:[{text:admin[1].value}],
-    birthDate:admin[2].value
-  };
-
-  const Encounter={
-    resourceType:"Encounter",
-    status:"finished",
-    subject:{reference:"Patient/"+Patient.id},
-    period:{start:admin[8].value}
-  };
-
-  const CarePlan={
-    resourceType:"CarePlan",
-    status:"active",
-    intent:"plan",
-    subject:{reference:"Patient/"+Patient.id},
-    title:"MTT Therapieplan",
-    description:prescribe[0].value,
-    activity:[]
-  };
-
-  [...table.rows].slice(1).forEach(r=>{
-    const i=r.querySelectorAll("input,select");
-    if(![...i].some(v=>v.value)) return;
-    CarePlan.activity.push({
-      detail:{
-        kind:"ServiceRequest",
-        description:`${i[1].value} – ${i[2].value}`,
-        scheduledString:`${i[3].value}x${i[4].value}`
-      }
-    });
+  let data=[];
+  [...table.rows].forEach(r=>{
+    const f=[...r.querySelectorAll("input,select")].map(e=>e.value);
+    if(f.join("").trim())
+      data.push({nr:f[1],art:f[2],geraet:f[3],belastung:f[4],
+        watt:f[5],kg:f[6],saetze:f[7],wdh:f[8],upm:f[9],icf:f[10]});
   });
-
-  const Bundle={
-    resourceType:"Bundle",
-    type:"collection",
-    timestamp:new Date().toISOString(),
-    entry:[{resource:Patient},{resource:Encounter},{resource:CarePlan}]
-  };
-
-  download(JSON.stringify(Bundle,null,2),"MTT_FHIR_Bundle.json","application/fhir+json");
+  download(JSON.stringify(data,null,2),"mtt_kos.json","application/json");
 }
 
 function download(data,name,type){
@@ -235,5 +221,6 @@ function download(data,name,type){
   a.click();
 }
 </script>
+
 </body>
 </html>
