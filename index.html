@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -86,8 +85,8 @@ Lokal · Mobilfähig · Keine Cloud · © Ali Moustafa
 <table id="exerciseTable">
 <tr>
 <th>✔</th><th>Nr</th><th>Art</th><th>Gerät</th>
-<th>Belastung</th><th>Watt</th><th>kg</th><th>Sätze</th>
-<th>Wdh</th><th>UPM</th><th>ICF Ziel</th><th>Kommentar</th>
+<th>Watt</th><th>kg</th><th>Sätze</th><th>Wdh</th>
+<th>UPM</th><th>ROM</th><th>Pause</th><th>Kommentar</th>
 </tr>
 </table>
 </div>
@@ -108,76 +107,104 @@ Lokal · Mobilfähig · Keine Cloud · © Ali Moustafa
 </div>
 
 <script>
-// ====== GERÄTE & ICF & PRESETS ======
-const geraete=[
-"Laufband","Fahrradergometer","Arm-Ergometer","Ellipsentrainer","Stepper",
-"Ruderergometer","Sitzergometer","Oberkörper-Ergometer","Seilzug Doppelturm",
-"Latzug","Ruderzug","Butterfly","Chest Press","Shoulder Press",
-"Beinpresse 45°","Beinstrecker","Beinbeuger","Abduktor","Adduktor",
-"Gluteusmaschine","Wadenpresse","Hüftstrecker","Hüftbeuger",
-"Rumpfstrecker","Rumpfbeuger","Rotationstrainer","Lateralflexion Rumpf",
-"Wirbelsäulenmobilisation","Nackenextension","Nackenflexion",
-"Schulterabduktion","Schulteradduktion","Schulterrotation innen",
-"Schulterrotation außen","Bizepsmaschine","Trizepsmaschine",
-"Unterarmtrainer","Handkrafttrainer","Greiftrainer",
-"Balance Board","Wackelbrett","Propriozeptionsplatte",
-"Thera-Band Station","Sprossenwand","Mattenübungen",
-"Kabelzug funktionell","Zirkelstation Beine","Zirkelstation Arme",
-"Zirkelstation Rumpf","Zirkelstation Ganzkörper",
-"Kniebeugenmaschine","Ausfallschritt-Trainer","Core-Trainer",
-"Schlingentrainer","Reaktionswand","Gangtrainer","Treppentrainer",
-"Stehtrainer","Rollstuhltrainer","Arm-Bein-Kombitrainer"
+// Presets
+const presets={
+  Kraft:{S:"3",W:"10",P:"60"},
+  Ausdauer:{S:"1",W:"-",P:"0"},
+  Mobilität:{S:"2",W:"12",P:"30"},
+  Stabilisation:{S:"2",W:"12",P:"30"}
+};
+
+// Geräte Liste 70 Standardgeräte
+const geraeteListe = [
+"Laufband","Fahrradergometer","Arm-Ergometer (Handkurbel)","Ellipsentrainer","Stepper","Ruderergometer","Sitzergometer","Oberkörper-Ergometer",
+"Seilzug Doppelturm","Seilzug Einfach","Latzugmaschine","Ruderzugmaschine","Butterfly / Reverse","Chest Press","Shoulder Press","Beinpresse 45°",
+"Horizontale Beinpresse","Beinstrecker","Beinbeuger","Abduktor","Adduktor","Gluteusmaschine","Wadenpresse","Hüftstrecker","Hüftbeuger","Rumpfstrecker",
+"Rumpfbeuger","Rotationstrainer Rumpf","Lateralflexion Rumpf","Wirbelsäulenmobilisation","Nackenextension","Nackenflexion","Schulterabduktion",
+"Schulteradduktion","Schulterrotation innen","Schulterrotation außen","Bizepsmaschine","Trizepsmaschine","Unterarmtrainer","Handkrafttrainer",
+"Greiftrainer","Koordinationsleiter","Balance Board","Propriozeptionsplatte","Wackelbrett","Thera-Band Station","Sprossenwand","Mattenübungsplatz",
+"Kabelzug funktionell","Zirkelstation 1 – Beine","Zirkelstation 2 – Arme","Zirkelstation 3 – Rumpf","Zirkelstation 4 – Ganzkörper","Kniebeugenmaschine",
+"Ausfallschritt-Trainer","Core-Trainer","Schlingentrainer","Reaktionswand","Koordinationsboard","Gangtrainer","Treppentrainer","Stehtrainer",
+"Rollstuhltrainer","Arm-/Bein-Kombitrainer"
 ];
 
-const icfMap={Ausdauer:"b455 – Belastbarkeit",Kraft:"b730 – Muskelkraft",Stabilisation:"b760 – Kontrolle",Mobilität:"b710 – Beweglichkeit"};
+function geraeteOptions(){ return geraeteListe.map(g=>`<option>${g}</option>`).join(""); }
 
-const belastung={leicht:{kg:10,watt:50,wdh:15,satz:2,upm:50},mittel:{kg:20,watt:80,wdh:12,satz:3,upm:60},schwer:{kg:30,watt:120,wdh:10,satz:4,upm:70}};
-
-function options(arr){return arr.map(v=>`<option>${v}</option>`).join("");}
-
+// Build table
 const table=document.getElementById("exerciseTable");
-
-for(let i=1;i<=70;i++){
+for(let n=1;n<=70;n++){
   const r=table.insertRow();
-  r.innerHTML=`
+  r.innerHTML = `
   <td><input type="checkbox"></td>
-  <td>${i}</td>
-  <td><select onchange="setICF(this)"><option></option><option>Ausdauer</option><option>Kraft</option><option>Mobilisation</option><option>Stabilisation</option></select></td>
-  <td><select>${options(geraete)}</select></td>
-  <td><select onchange="setLoad(this)"><option></option><option>leicht</option><option>mittel</option><option>schwer</option></select></td>
-  <td><input></td>
-  <td><input></td>
-  <td><input></td>
-  <td><input></td>
-  <td><input></td>
-  <td><input></td>
-  <td><input></td>
-  `;
+  <td>${n}</td>
+  <td>
+    <select onchange="applyPreset(this)">
+      <option></option>
+      <option>Kraft</option>
+      <option>Ausdauer</option>
+      <option>Mobilität</option>
+      <option>Stabilisation</option>
+    </select>
+  </td>
+  <td>
+    <select><option value="">Gerät auswählen</option>${geraeteOptions()}</select>
+  </td>
+  <td><select><option>Watt</option></select></td>
+  <td><select><option>kg</option></select></td>
+  <td><select><option>Sätze</option></select></td>
+  <td><select><option>Wdh</option></select></td>
+  <td><select><option>UPM</option></select></td>
+  <td><select><option>ROM</option></select></td>
+  <td><select><option>Pause</option></select></td>
+  <td><select><option>Kommentar</option></select></td>`;
 }
 
-function setLoad(sel){
-  const r=sel.closest("tr");
-  const p=belastung[sel.value]; if(!p) return;
-  r.cells[5].querySelector("input").value=p.watt;
-  r.cells[6].querySelector("input").value=p.kg;
-  r.cells[7].querySelector("input").value=p.satz;
-  r.cells[8].querySelector("input").value=p.wdh;
-  r.cells[9].querySelector("input").value=p.upm;
+// Preset apply
+function applyPreset(sel){
+  const p=presets[sel.value]; if(!p)return;
+  const s=sel.closest("tr").querySelectorAll("select");
+  s[6].value=p.S;
+  s[7].value=p.W;
+  s[10].value=p.P;
 }
 
-function setICF(sel){sel.closest("tr").cells[10].querySelector("input").value=icfMap[sel.value]||"";}
+// Exports
+function download(data,name,type){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([data],{type}));
+  a.download=name; a.click();
+}
 
-// ====== EXPORT FUNCTIONS ======
 function exportCSV(){
-  let csv="";[...table.rows].forEach(r=>{const v=[...r.querySelectorAll("input,select")].map(e=>e.value);if(v.join("").trim())csv+=v.join(";")+"\n";});
-  download(csv,"MTT_KOS.csv","text/csv");
+  let out="Nr;Art;Gerät;Watt;kg;Sätze;Wdh;UPM;ROM;Pause;Kommentar\n";
+  [...table.rows].slice(1).forEach(r=>{
+    const v=[...r.querySelectorAll("select,input")].map(i=>i.value);
+    if(v.join("").trim()) out+=`${r.cells[1].innerText};${v.slice(1).join(";")}\n`;
+  });
+  download(out,"MTT_KOS.csv","text/csv");
 }
+
 function exportJSON(){
-  let out=[];[...table.rows].forEach(r=>{const f=[...r.querySelectorAll("input,select")].map(e=>e.value);if(f.join("").trim())out.push({nr:f[1],art:f[2],geraet:f[3],belastung:f[4],watt:f[5],kg:f[6],saetze:f[7],wdh:f[8],upm:f[9],icf:f[10],kommentar:f[11]});});
-  download(JSON.stringify(out,null,2),"MTT_KOS.json","application/json");
+  const json={
+    system:"MTT-Planer",
+    created:new Date().toISOString(),
+    exercises:[...table.rows].slice(1).map(r=>{
+      const i=r.querySelectorAll("select,input");
+      return{nr:r.cells[1].innerText,art:i[1].value,geraet:i[2].value};
+    }).filter(e=>Object.values(e).join("").trim())
+  };
+  download(JSON.stringify(json,null,2),"MTT_KOS.json","application/json");
 }
-function exportFHIR(){alert("FHIR export wird später implementiert");}
-function download(data,name,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click();}
+
+function exportFHIR(){
+  const Bundle={resourceType:"Bundle",type:"collection",timestamp:new Date().toISOString(),entry:[]};
+  [...table.rows].slice(1).forEach(r=>{
+    const i=r.querySelectorAll("select,input");
+    if(![...i].some(v=>v.value)) return;
+    Bundle.entry.push({resource:{resourceType:"CarePlan",activity:[{detail:{description:i[2].value+" - "+i[3].value}}]}});
+  });
+  download(JSON.stringify(Bundle,null,2),"MTT_FHIR_Bundle.json","application/fhir+json");
+}
 </script>
 
 </body>
