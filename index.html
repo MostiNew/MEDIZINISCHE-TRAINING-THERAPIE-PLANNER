@@ -3,18 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MTT-Planer – Therapieplan</title>
-
+<title>MTT-Planer – Vollständig</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f7fa;margin:0;padding:12px;color:#1f2937}
 h1,h2{margin:0 0 8px}
-.container{max-width:100%;margin:auto}
+.container{max-width:100%;margin:auto;padding:0 8px}
 .card{background:#fff;border-radius:10px;padding:12px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
-select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #cbd5e1;font-size:.8rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:8px}
+select,textarea,input{width:100%;padding:8px;border-radius:6px;border:1px solid #cbd5e1;font-size:.8rem}
 textarea{resize:vertical}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-button{flex:1;padding:10px;border-radius:10px;border:none;background:#0284c7;color:#fff;font-size:.85rem}
+button{flex:1;padding:10px;border-radius:8px;border:none;background:#0284c7;color:#fff;font-size:.85rem;cursor:pointer}
 button.secondary{background:#334155}
 .admin{border-left:4px solid #ca8a04}
 .prescribe{border-left:4px solid #0284c7}
@@ -26,20 +25,24 @@ th{background:#0284c7;color:#fff;padding:6px;white-space:nowrap}
 td{border-bottom:1px solid #e2e8f0;padding:6px;text-align:center}
 tr:hover td{background:#e0f2fe}
 footer{text-align:center;font-size:.7rem;color:#6b7280;margin-top:16px}
-@media print{.actions{display:none}}
+@media print{
+  .actions, input, select, button{display:none}
+  #exerciseTable tr{display:none;}
+  #exerciseTable tr.printable{display:table-row;}
+}
 </style>
 </head>
-
 <body>
 <div class="container">
 
 <h1>MTT-Planer</h1>
 <div style="font-size:.7rem;color:#475569;margin-bottom:10px">
-Lokal · Mobilfähig · Keine Cloud · © Ali Moustafa
+Lokal · Mobile · Offline · © Ali Moustafa
 </div>
 
 <div class="actions">
   <button onclick="window.print()">🖨️ Drucken</button>
+  <button onclick="quickPrint()">🖨️ Quick Print</button>
   <button class="secondary" onclick="exportCSV()">CSV</button>
   <button class="secondary" onclick="exportJSON()">JSON</button>
   <button class="secondary" onclick="exportFHIR()">FHIR</button>
@@ -47,34 +50,44 @@ Lokal · Mobilfähig · Keine Cloud · © Ali Moustafa
 
 <!-- ADMIN -->
 <div class="card admin">
-<h2>A. Patient & Organisation</h2>
-<div class="grid admin-fields">
-  <select><option>Patienten-ID</option></select>
-  <select><option>Name, Vorname</option></select>
-  <select><option>Geburtsdatum</option></select>
-  <select><option>Fallnummer / KOS-ID</option></select>
-  <select><option>Station</option></select>
-  <select><option>Raum / MTT</option></select>
-  <select><option>Arzt</option></select>
-  <select><option>Therapeut</option></select>
-  <select><option>Datum</option></select>
+<h2>A. Patient & Station</h2>
+<div class="grid">
+  <input id="patID" placeholder="Patienten-ID">
+  <input id="patName" placeholder="Name, Vorname">
+  <input id="patDOB" type="date" placeholder="Geburtsdatum">
+  <input id="patKOS" placeholder="Fallnummer / KOS-ID">
+  <input id="patStation" placeholder="Station">
+  <input id="patRaum" placeholder="Raum / MTT">
+  <input id="patArzt" placeholder="Arzt">
+  <input id="patTherapeut" placeholder="Therapeut">
+  <input id="patDatum" type="date" placeholder="Datum">
 </div>
 </div>
 
 <!-- PRESCRIBE -->
 <div class="card prescribe">
 <h2>B. Therapieplanung</h2>
-<div class="grid prescribe-fields">
-  <select><option>Diagnose / Befund</option></select>
-  <select><option>Therapieziele (ICF)</option></select>
-  <select><option>Körperregion</option></select>
-  <select><option>Akut</option><option>Aufbau</option><option>Funktionell</option><option>Return-to-Activity</option></select>
-  <select><option>ROM min</option></select>
-  <select><option>ROM max</option></select>
-  <select><option>Schmerz (NRS)</option></select>
-  <select><option>submaximal</option><option>progressiv</option><option>isometrisch</option><option>exzentrisch</option></select>
-  <select><option>Tempo / UPM</option></select>
-  <select><option>Pause (s)</option></select>
+<div class="grid">
+  <input id="diag" placeholder="Diagnose / Befund">
+  <textarea id="icf" placeholder="Therapieziele (ICF)"></textarea>
+  <input id="koerper" placeholder="Körperregion">
+  <select id="rehaphase">
+    <option>Akut</option>
+    <option>Aufbau</option>
+    <option>Funktionell</option>
+    <option>Return-to-Activity</option>
+  </select>
+  <input id="romMin" placeholder="ROM min">
+  <input id="romMax" placeholder="ROM max">
+  <input id="schmerz" placeholder="Max. Schmerz (NRS)">
+  <select id="belastung">
+    <option>submaximal</option>
+    <option>progressiv</option>
+    <option>isometrisch</option>
+    <option>exzentrisch</option>
+  </select>
+  <input id="tempo" placeholder="Tempo / UPM">
+  <input id="pause" placeholder="Pause (s)">
 </div>
 </div>
 
@@ -96,116 +109,105 @@ Lokal · Mobilfähig · Keine Cloud · © Ali Moustafa
 <div class="card evaluate">
 <h2>D. Evaluation</h2>
 <div class="grid">
-  <select><option>ROM erreicht</option><option>teilweise</option><option>nein</option></select>
-  <select><option>Schmerz (NRS)</option></select>
-  <select><option>Belastung gut</option><option>reduziert</option><option>nicht toleriert</option></select>
-  <select><option>Kommentar</option></select>
+  <select id="evalROM">
+    <option>ROM erreicht?</option><option>Ja</option><option>Teilweise</option><option>Nein</option>
+  </select>
+  <input id="evalSchmerz" placeholder="Schmerz (NRS)">
+  <select id="evalBelastung">
+    <option>Belastung</option><option>gut</option><option>reduziert</option><option>nicht toleriert</option>
+  </select>
+  <textarea id="evalKommentar" placeholder="Kommentar"></textarea>
 </div>
 </div>
 
-<footer>MTT-Planer · Mobile · GitHub Pages</footer>
+<!-- PATIENT SAVE/LOAD -->
+<div class="card admin">
+<h2>Patientenverwaltung</h2>
+<div class="grid">
+  <input id="saveName" placeholder="Name für Speicherung">
+  <button onclick="savePatient()">💾 Speichern</button>
+  <select id="loadList"><option>-- Lade Patient --</option></select>
+  <button onclick="loadPatient()">📂 Laden</button>
+  <button onclick="deletePatient()">❌ Löschen</button>
+</div>
+</div>
+
+<footer>MTT-Planer · Offline · GitHub Pages</footer>
 </div>
 
 <script>
 // Presets
-const presets={
-  Kraft:{S:"3",W:"10",P:"60"},
-  Ausdauer:{S:"1",W:"-",P:"0"},
-  Mobilität:{S:"2",W:"12",P:"30"},
-  Stabilisation:{S:"2",W:"12",P:"30"}
-};
+const presets={Kraft:{saetze:"3",wdh:"10",upm:"2",gewicht:"10",watt:""},Ausdauer:{saetze:"1",wdh:"-",upm:"60",gewicht:"-",watt:"100"},Mobilität:{saetze:"2",wdh:"12",upm:"-",gewicht:"-",watt:"-"},Stabilisation:{saetze:"2",wdh:"12",upm:"-",gewicht:"-",watt:"-"}};
 
-// Geräte Liste 70 Standardgeräte
-const geraeteListe = [
-"Laufband","Fahrradergometer","Arm-Ergometer (Handkurbel)","Ellipsentrainer","Stepper","Ruderergometer","Sitzergometer","Oberkörper-Ergometer",
-"Seilzug Doppelturm","Seilzug Einfach","Latzugmaschine","Ruderzugmaschine","Butterfly / Reverse","Chest Press","Shoulder Press","Beinpresse 45°",
-"Horizontale Beinpresse","Beinstrecker","Beinbeuger","Abduktor","Adduktor","Gluteusmaschine","Wadenpresse","Hüftstrecker","Hüftbeuger","Rumpfstrecker",
-"Rumpfbeuger","Rotationstrainer Rumpf","Lateralflexion Rumpf","Wirbelsäulenmobilisation","Nackenextension","Nackenflexion","Schulterabduktion",
-"Schulteradduktion","Schulterrotation innen","Schulterrotation außen","Bizepsmaschine","Trizepsmaschine","Unterarmtrainer","Handkrafttrainer",
-"Greiftrainer","Koordinationsleiter","Balance Board","Propriozeptionsplatte","Wackelbrett","Thera-Band Station","Sprossenwand","Mattenübungsplatz",
-"Kabelzug funktionell","Zirkelstation 1 – Beine","Zirkelstation 2 – Arme","Zirkelstation 3 – Rumpf","Zirkelstation 4 – Ganzkörper","Kniebeugenmaschine",
-"Ausfallschritt-Trainer","Core-Trainer","Schlingentrainer","Reaktionswand","Koordinationsboard","Gangtrainer","Treppentrainer","Stehtrainer",
-"Rollstuhltrainer","Arm-/Bein-Kombitrainer"
-];
-
+// 70 Geräte
+const geraeteListe=["Laufband","Fahrradergometer","Arm-Ergometer","Ellipsentrainer","Stepper","Ruderergometer","Sitzergometer","Oberkörper-Ergometer","Seilzug Doppelturm","Seilzug Einfach","Latzugmaschine","Ruderzugmaschine","Butterfly","Chest Press","Shoulder Press","Beinpresse 45°","Horizontale Beinpresse","Beinstrecker","Beinbeuger","Abduktor","Adduktor","Gluteusmaschine","Wadenpresse","Hüftstrecker","Hüftbeuger","Rumpfstrecker","Rumpfbeuger","Rotationstrainer Rumpf","Lateralflexion Rumpf","Wirbelsäulenmobilisation","Nackenextension","Nackenflexion","Schulterabduktion","Schulteradduktion","Schulterrotation innen","Schulterrotation außen","Bizepsmaschine","Trizepsmaschine","Unterarmtrainer","Handkrafttrainer","Greiftrainer","Koordinationsleiter","Balance Board","Propriozeptionsplatte","Wackelbrett","Thera-Band Station","Sprossenwand","Mattenübungsplatz","Kabelzug funktionell","Zirkelstation Beine","Zirkelstation Arme","Zirkelstation Rumpf","Zirkelstation Ganzkörper","Kniebeugenmaschine","Ausfallschritt-Trainer","Core-Trainer","Schlingentrainer","Reaktionswand","Koordinationsboard","Gangtrainer","Treppentrainer","Stehtrainer","Rollstuhltrainer","Arm-/Bein-Kombitrainer"];
 function geraeteOptions(){ return geraeteListe.map(g=>`<option>${g}</option>`).join(""); }
 
 // Build table
 const table=document.getElementById("exerciseTable");
 for(let n=1;n<=70;n++){
   const r=table.insertRow();
-  r.innerHTML = `
+  r.innerHTML=`
   <td><input type="checkbox"></td>
   <td>${n}</td>
-  <td>
-    <select onchange="applyPreset(this)">
-      <option></option>
-      <option>Kraft</option>
-      <option>Ausdauer</option>
-      <option>Mobilität</option>
-      <option>Stabilisation</option>
-    </select>
-  </td>
-  <td>
-    <select><option value="">Gerät auswählen</option>${geraeteOptions()}</select>
-  </td>
-  <td><select><option>Watt</option></select></td>
-  <td><select><option>kg</option></select></td>
-  <td><select><option>Sätze</option></select></td>
-  <td><select><option>Wdh</option></select></td>
-  <td><select><option>UPM</option></select></td>
-  <td><select><option>ROM</option></select></td>
-  <td><select><option>Pause</option></select></td>
-  <td><select><option>Kommentar</option></select></td>`;
+  <td><select onchange="applyPreset(this)"><option></option><option>Kraft</option><option>Ausdauer</option><option>Mobilität</option><option>Stabilisation</option></select></td>
+  <td><select><option value="">Gerät auswählen</option>${geraeteOptions()}</select></td>
+  <td><input></td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td><td><input></td>`;
 }
 
-// Preset apply
+// Preset auto-fill
 function applyPreset(sel){
   const p=presets[sel.value]; if(!p)return;
-  const s=sel.closest("tr").querySelectorAll("select");
-  s[6].value=p.S;
-  s[7].value=p.W;
-  s[10].value=p.P;
+  const s=sel.closest("tr").querySelectorAll("input,select");
+  if(p.saetze) s[6].value=p.saetze;
+  if(p.wdh) s[7].value=p.wdh;
+  if(p.upm) s[8].value=p.upm;
+  if(p.gewicht) s[5].value=p.gewicht;
+  if(p.watt) s[4].value=p.watt;
 }
 
-// Exports
-function download(data,name,type){
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([data],{type}));
-  a.download=name; a.click();
-}
-
-function exportCSV(){
-  let out="Nr;Art;Gerät;Watt;kg;Sätze;Wdh;UPM;ROM;Pause;Kommentar\n";
-  [...table.rows].slice(1).forEach(r=>{
-    const v=[...r.querySelectorAll("select,input")].map(i=>i.value);
-    if(v.join("").trim()) out+=`${r.cells[1].innerText};${v.slice(1).join(";")}\n`;
+// Quick Print
+function quickPrint(){
+  [...table.rows].forEach((r,i)=>{
+    if(i===0){ r.classList.add("printable"); return; }
+    const checkbox = r.querySelector("input[type=checkbox]");
+    const hasValues = [...r.querySelectorAll("select,input")].some(i=>i.value && i.value!=="");
+    if(checkbox.checked || hasValues){ r.classList.add("printable"); }
+    else{ r.classList.remove("printable"); }
   });
-  download(out,"MTT_KOS.csv","text/csv");
+  window.print();
+  setTimeout(()=>[...table.rows].forEach(r=>r.classList.remove("printable")),500);
 }
 
-function exportJSON(){
-  const json={
-    system:"MTT-Planer",
-    created:new Date().toISOString(),
-    exercises:[...table.rows].slice(1).map(r=>{
-      const i=r.querySelectorAll("select,input");
-      return{nr:r.cells[1].innerText,art:i[1].value,geraet:i[2].value};
-    }).filter(e=>Object.values(e).join("").trim())
+// Export
+function download(data,name,type){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([data],{type})); a.download=name; a.click(); }
+function exportCSV(){ let out="Nr;Art;Gerät;Watt;kg;Sätze;Wdh;UPM;ROM;Pause;Kommentar\n"; [...table.rows].slice(1).forEach(r=>{ const vals=[...r.querySelectorAll("select,input")].map(i=>i.value); if(vals.join("").trim()) out+=`${r.cells[1].innerText};${vals.slice(1).join(";")}\n`; }); download(out,"MTT_Patient.csv","text/csv"); }
+function exportJSON(){ download(JSON.stringify(exportPatientData(),null,2),"MTT_Patient.json","application/json"); }
+function exportFHIR(){ const Bundle={resourceType:"Bundle",type:"collection",timestamp:new Date().toISOString(),entry:[]}; [...table.rows].slice(1).forEach(r=>{ const i=r.querySelectorAll("select,input"); if(![...i].some(v=>v.value)) return; Bundle.entry.push({resource:{resourceType:"CarePlan",activity:[{detail:{description:i[1].value+" - "+i[2].value}}]} }); }); download(JSON.stringify(Bundle,null,2),"MTT_FHIR_Bundle.json","application/fhir+json"); }
+
+// LocalStorage
+function refreshLoadList(){ const loadList=document.getElementById("loadList"); loadList.innerHTML='<option>-- Lade Patient --</option>'; for(let key in localStorage){ if(key.startsWith("MTT_PAT_")) loadList.innerHTML+=`<option value="${key}">${key.replace("MTT_PAT_","")}</option>`; } }
+function savePatient(){ const name=document.getElementById("saveName").value.trim(); if(!name){ alert("Bitte Namen eingeben!"); return; } localStorage.setItem("MTT_PAT_"+name,JSON.stringify(exportPatientData())); refreshLoadList(); alert("Patient gespeichert!"); }
+function loadPatient(){ const sel=document.getElementById("loadList"); const key=sel.value; if(!key || key==="-- Lade Patient --"){ alert("Bitte auswählen!"); return; } importPatientData(JSON.parse(localStorage.getItem(key))); }
+function deletePatient(){ const sel=document.getElementById("loadList"); const key=sel.value; if(!key || key==="-- Lade Patient --"){ alert("Bitte auswählen!"); return; } if(confirm("Wirklich löschen?")){ localStorage.removeItem(key); refreshLoadList(); alert("Patient gelöscht!"); } }
+
+function exportPatientData(){
+  return {
+    patient:{id:patID.value,name:patName.value,dob:patDOB.value,kos:patKOS.value,station:patStation.value,raum:patRaum.value,arzt:patArzt.value,therapeut:patTherapeut.value,datum:patDatum.value},
+    therapy:{diagnose:diag.value,icf:icf.value,koerper:koerper.value,phase:rehaphase.value,romMin:romMin.value,romMax:romMax.value,schmerz:schmerz.value,belastung:belastung.value,tempo:tempo.value,pause:pause.value},
+    exercises:[...table.rows].slice(1).map(r=>{const i=r.querySelectorAll("select,input"); return{nr:r.cells[1].innerText,art:i[1].value,geraet:i[2].value,watt:i[3].value,kg:i[4].value,saetze:i[5].value,wdh:i[6].value,upm:i[7].value,rom:i[8].value,pause:i[9].value,kommentar:i[10].value}}),
+    evaluation:{rom:evalROM.value,schmerz:evalSchmerz.value,belastung:evalBelastung.value,kommentar:evalKommentar.value}
   };
-  download(JSON.stringify(json,null,2),"MTT_KOS.json","application/json");
 }
 
-function exportFHIR(){
-  const Bundle={resourceType:"Bundle",type:"collection",timestamp:new Date().toISOString(),entry:[]};
-  [...table.rows].slice(1).forEach(r=>{
-    const i=r.querySelectorAll("select,input");
-    if(![...i].some(v=>v.value)) return;
-    Bundle.entry.push({resource:{resourceType:"CarePlan",activity:[{detail:{description:i[2].value+" - "+i[3].value}}]}});
-  });
-  download(JSON.stringify(Bundle,null,2),"MTT_FHIR_Bundle.json","application/fhir+json");
+function importPatientData(data){
+  const p=data.patient; patID.value=p.id; patName.value=p.name; patDOB.value=p.dob; patKOS.value=p.kos; patStation.value=p.station; patRaum.value=p.raum; patArzt.value=p.arzt; patTherapeut.value=p.therapeut; patDatum.value=p.datum;
+  const t=data.therapy; diag.value=t.diagnose; icf.value=t.icf; koerper.value=t.koerper; rehaphase.value=t.phase; romMin.value=t.romMin; romMax.value=t.romMax; schmerz.value=t.schmerz; belastung.value=t.belastung; tempo.value=t.tempo; pause.value=t.pause;
+  data.exercises.forEach((ex,i)=>{ const r=table.rows[i+1]; const iEls=r.querySelectorAll("select,input"); iEls[1].value=ex.art; iEls[2].value=ex.geraet; iEls[3].value=ex.watt; iEls[4].value=ex.kg; iEls[5].value=ex.saetze; iEls[6].value=ex.wdh; iEls[7].value=ex.upm; iEls[8].value=ex.rom; iEls[9].value=ex.pause; iEls[10].value=ex.kommentar; if(ex.art||ex.geraet) r.querySelector("input[type=checkbox]").checked=true; });
+  const e=data.evaluation; evalROM.value=e.rom; evalSchmerz.value=e.schmerz; evalBelastung.value=e.belastung; evalKommentar.value=e.kommentar;
 }
+
+refreshLoadList();
 </script>
-
 </body>
 </html>
