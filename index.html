@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MTT-Planer Reaktiv</title>
+<title>MTT-Planer PDF Fix</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f7fa;margin:0;padding:12px;color:#1f2937}
 h1,h2{margin:0 0 8px}
@@ -24,39 +24,42 @@ td{border-bottom:1px solid #e2e8f0;padding:6px;text-align:center}
 </head>
 <body>
 <div class="container">
-<h1>MTT-Therapieplan Reaktiv</h1>
+<h1>MTT-Therapieplan</h1>
+
 <div class="actions screen-only">
 <button onclick="window.print()">🖨️ Drucken / PDF</button>
 <button class="secondary" onclick="savePatient()">💾 Speichern</button>
 <button class="secondary" onclick="loadPatient()">📂 Laden</button>
 </div>
 
+<!-- Patient Info -->
 <div class="card screen-only">
 <h2>Patient & Station</h2>
 <div class="grid">
-  <input id="pid" placeholder="Patienten-ID">
-  <input id="name" placeholder="Name, Vorname">
-  <input id="dob" type="date">
-  <input id="station" placeholder="Station">
-  <input id="arzt" placeholder="Arzt">
-  <input id="therapeut" placeholder="Therapeut">
-  <input id="datum" type="date">
+<input id="pid" placeholder="Patienten-ID">
+<input id="name" placeholder="Name, Vorname">
+<input id="dob" type="date">
+<input id="station" placeholder="Station">
+<input id="arzt" placeholder="Arzt">
+<input id="therapeut" placeholder="Therapeut">
+<input id="datum" type="date">
 </div>
 </div>
 
+<!-- Therapieplanung -->
 <div class="card screen-only">
 <h2>Therapieplanung</h2>
 <div class="grid">
-  <input id="diagnose" placeholder="Diagnose">
-  <select id="phase">
-    <option>Akut</option><option>Aufbau</option>
-    <option>Funktionell</option><option>Return-to-Activity</option>
-  </select>
-  <textarea id="icf" placeholder="ICF-Ziele"></textarea>
-  <input id="schmerz" placeholder="Schmerz (NRS)">
+<input id="diagnose" placeholder="Diagnose">
+<select id="phase">
+<option>Akut</option><option>Aufbau</option><option>Funktionell</option><option>Return-to-Activity</option>
+</select>
+<textarea id="icf" placeholder="ICF-Ziele"></textarea>
+<input id="schmerz" placeholder="Schmerz (NRS)">
 </div>
 </div>
 
+<!-- Übungseingabe -->
 <div class="card screen-only">
 <h2>MTT-Übungen</h2>
 <table id="exerciseInput">
@@ -68,7 +71,7 @@ td{border-bottom:1px solid #e2e8f0;padding:6px;text-align:center}
 </table>
 </div>
 
-<!-- ================= PRINT LAYOUT ================= -->
+<!-- Print Layout -->
 <div class="print-only">
 <h2>Patient</h2>
 <p><b>ID:</b> <span id="p_pid"></span></p>
@@ -97,15 +100,12 @@ td{border-bottom:1px solid #e2e8f0;padding:6px;text-align:center}
 </div>
 
 <script>
-const geraete=[
-"Laufband","Fahrradergometer","Arm-Ergometer","Ellipsentrainer","Stepper",
+const geraete=["Laufband","Fahrradergometer","Arm-Ergometer","Ellipsentrainer","Stepper",
 "Ruderergometer","Seilzug","Latzug","Chest Press","Beinpresse","Beinstrecker",
 "Beinbeuger","Abduktor","Adduktor","Rumpfbeuger","Rumpfstrecker",
-"Schulterpresse","Bizeps","Trizeps","Wadenpresse"
-];
+"Schulterpresse","Bizeps","Trizeps","Wadenpresse"];
 
 const table=document.getElementById("exerciseInput");
-const printTable=document.getElementById("exercisePrint");
 
 // Build 70 rows
 for(let i=1;i<=70;i++){
@@ -120,8 +120,10 @@ for(let i=1;i<=70;i++){
   `;
 }
 
-// Reactive update function
-function updatePrint() {
+// Populate print table just before printing
+window.onbeforeprint = () => {
+  const pt = document.getElementById("exercisePrint");
+
   // Copy patient info
   p_pid.textContent = pid.value;
   p_name.textContent = name.value;
@@ -136,32 +138,25 @@ function updatePrint() {
   p_icf.textContent = icf.value;
   p_schmerz.textContent = schmerz.value;
 
-  // Clear previous print table except header
-  printTable.innerHTML = `
-  <tr>
-    <th>Nr</th><th>Art</th><th>Gerät</th>
-    <th>Watt</th><th>kg</th><th>Sätze</th>
-    <th>Wdh</th><th>UPM</th><th>Pause</th><th>Kommentar</th>
-  </tr>
-  `;
+  // Reset print table with header
+  pt.innerHTML = `<tr>
+<th>Nr</th><th>Art</th><th>Gerät</th>
+<th>Watt</th><th>kg</th><th>Sätze</th>
+<th>Wdh</th><th>UPM</th><th>Pause</th><th>Kommentar</th>
+</tr>`;
 
+  // Add only filled/checked exercises
   [...table.rows].slice(1).forEach(r=>{
     const inputs=r.querySelectorAll("input, select");
     const checked = inputs[0].checked;
     const values = Array.from(inputs).slice(1).map(i=>i.value.trim());
     if(checked || values.some(v=>v!=="")){
-      const row = printTable.insertRow();
+      const row = pt.insertRow();
       row.insertCell().textContent = r.cells[1].innerText; // Nr
       values.forEach(v=>row.insertCell().textContent=v||"—");
     }
   });
-}
-
-// Listen to any change in inputs to update print table
-table.addEventListener("input", updatePrint);
-document.querySelectorAll("#pid,#name,#dob,#station,#arzt,#therapeut,#datum,#diagnose,#phase,#icf,#schmerz").forEach(i=>{
-  i.addEventListener("input", updatePrint);
-});
+};
 
 // Storage
 function savePatient(){
@@ -174,7 +169,6 @@ function loadPatient(){
   Object.keys(d).forEach(k=>{
     if(document.getElementById(k)) document.getElementById(k).value=d[k];
   });
-  updatePrint();
 }
 function getData(){
   return {
@@ -183,9 +177,6 @@ function getData(){
     diagnose:diagnose.value,phase:phase.value,icf:icf.value,schmerz:schmerz.value
   };
 }
-
-// Initial reactive update
-updatePrint();
 </script>
 </body>
 </html>
