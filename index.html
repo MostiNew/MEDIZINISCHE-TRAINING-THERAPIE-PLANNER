@@ -107,9 +107,8 @@ td{border-bottom:1px solid #e2e8f0;padding:6px;text-align:center}
 <table id="exercisePrint">
 <tr>
   <th>Nr</th><th>Art</th><th>Gerät</th>
-  <th>Watt</th><th>kg</th>
-  <th>Sätze</th><th>Wdh</th>
-  <th>UPM</th><th>Pause</th><th>Kommentar</th>
+  <th>Watt</th><th>kg</th><th>Sätze</th>
+  <th>Wdh</th><th>UPM</th><th>Pause</th><th>Kommentar</th>
 </tr>
 </table>
 </div>
@@ -169,18 +168,26 @@ function printPlan() {
   p_schmerz.textContent = schmerz.value;
 
   const pt = document.getElementById("exercisePrint");
-  pt.innerHTML = pt.rows[0].outerHTML; // Keep header
+
+  // Reset print table & add header
+  pt.innerHTML = `
+  <tr>
+    <th>Nr</th><th>Art</th><th>Gerät</th>
+    <th>Watt</th><th>kg</th><th>Sätze</th>
+    <th>Wdh</th><th>UPM</th><th>Pause</th><th>Kommentar</th>
+  </tr>
+  `;
 
   let count = 0;
   [...table.rows].slice(1).forEach(r => {
-    const cells = r.querySelectorAll("input, select");
-    const checked = cells[0].checked;
-    const values = Array.from(cells).slice(1).map(i => i.value.trim());
+    const inputs = r.querySelectorAll("input, select");
+    const checked = inputs[0].checked;
+    const values = Array.from(inputs).slice(1).map(i => i.value.trim());
 
     if (checked || values.some(v => v !== "")) {
-      const pr = pt.insertRow();
-      pr.insertCell().textContent = r.cells[1].innerText; // Nr
-      values.forEach(v => pr.insertCell().textContent = v || "—");
+      const newRow = pt.insertRow();
+      newRow.insertCell().textContent = r.cells[1].innerText; // Nr
+      values.forEach(v => newRow.insertCell().textContent = v || "—");
       count++;
     }
   });
