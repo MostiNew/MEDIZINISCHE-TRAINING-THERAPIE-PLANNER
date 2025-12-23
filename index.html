@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MTT-Planer PDF Fix</title>
+<title>MTT-Planer FHIR Export</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f7fa;margin:0;padding:12px;color:#1f2937}
 h1,h2{margin:0 0 8px}
@@ -28,7 +28,9 @@ td{border-bottom:1px solid #e2e8f0;padding:6px;text-align:center}
 
 <div class="actions screen-only">
 <button onclick="window.print()">🖨️ Drucken / PDF</button>
-<button class="secondary" onclick="savePatient()">💾 Speichern</button>
+<button class="secondary" onclick="exportJSON()">💾 JSON (FHIR)</button>
+<button class="secondary" onclick="exportCSV()">💾 CSV</button>
+<button class="secondary" onclick="savePatient()">📂 Speichern</button>
 <button class="secondary" onclick="loadPatient()">📂 Laden</button>
 </div>
 
@@ -147,7 +149,7 @@ window.onbeforeprint = () => {
 
   // Add only filled/checked exercises
   [...table.rows].slice(1).forEach(r=>{
-    const inputs=r.querySelectorAll("input, select");
+    const inputs = r.querySelectorAll("input, select");
     const checked = inputs[0].checked;
     const values = Array.from(inputs).slice(1).map(i=>i.value.trim());
     if(checked || values.some(v=>v!=="")){
@@ -170,6 +172,80 @@ function loadPatient(){
     if(document.getElementById(k)) document.getElementById(k).value=d[k];
   });
 }
+
+// Collect exercises
+function getExercises(){
+  return [...table.rows].slice(1).map(r=>{
+    const inputs=r.querySelectorAll("input, select");
+    const checked = inputs[0].checked;
+    const values = Array.from(inputs).slice(1).map(i=>i.value.trim());
+    if(checked || values.some(v=>v!=="")){
+      return {
+        nr: r.cells[1].innerText,
+        art: values[0]||null,
+        geraet: values[1]||null,
+        watt: values[2]||null,
+        kg: values[3]||null,
+        saetze: values[4]||null,
+        wdh: values[5]||null,
+        upm: values[6]||null,
+        pause: values[7]||null,
+        kommentar: values[8]||null
+      };
+    }
+    return null;
+  }).filter(e=>e!==null);
+}
+
+// Get full data in FHIR-like JSON
+function getFHIR(){
+  return {
+    resourceType:"MTTPlan",
+    patient:{
+      id: pid.value,
+      name: name.value,
+      dob: dob.value,
+      station: station.value,
+      arzt: arzt.value,
+      therapeut: therapeut.value,
+      datum: datum.value
+    },
+    therapyPlan:{
+      diagnose: diagnose.value,
+      phase: phase.value,
+      icf: icf.value,
+      schmerz: schmerz.value
+    },
+    exercises: getExercises()
+  };
+}
+
+// Export JSON
+function exportJSON(){
+  const data = getFHIR();
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download="mtt_plan.json"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Export CSV
+function exportCSV(){
+  const ex = getExercises();
+  if(ex.length===0){alert("Keine Übungen für CSV");return;}
+  const headers=["Nr","Art","Gerät","Watt","kg","Sätze","Wdh","UPM","Pause","Kommentar"];
+  const csv = [headers.join(",")].concat(
+    ex.map(e=>headers.map(h=>JSON.stringify(e[h.toLowerCase()]||"")).join(","))
+  ).join("\n");
+  const blob = new Blob([csv],{type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download="mtt_plan.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Collect patient+plan data
 function getData(){
   return {
     pid:pid.value,name:name.value,dob:dob.value,station:station.value,
